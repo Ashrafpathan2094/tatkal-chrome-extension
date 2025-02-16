@@ -1,14 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "Click to run",
-  "description": "Runs a script when the user clicks the action toolbar icon.",
+  "name": "IRCTC Auto Fill",
   "version": "1.0",
   "action": {
     "default_popup": "index.html"
   },
   "host_permissions": ["http://*/*", "https://*/*"],
-  "permissions": ["scripting", "tabs"],
+  "permissions": ["scripting", "storage", "tabs"],
   "background": {
     "service_worker": "background.js"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
   }
 }

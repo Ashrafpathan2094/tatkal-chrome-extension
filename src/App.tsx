@@ -1,132 +1,144 @@
+import React, { useState, useEffect } from "react";
 import "./App.css";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+
+type Passenger = {
+  name: string;
+  age: string;
+  gender: string;
+  food: string;
+};
 
 function App() {
-  const onclick = async () => {
-    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [passengers, setPassengers] = useState<Passenger[]>([
+    { name: "", age: "", gender: "M", food: "D" }, // Default food set to "D"
+  ]);
+  const [submittedPassengers, setSubmittedPassengers] = useState<Passenger[]>(
+    []
+  );
+  const [showAll, setShowAll] = useState(false);
 
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id! },
-      func: () => {
-        // Click the anchor tag
-        const addPassengerButton = document.querySelector("a .prenext");
-        if (addPassengerButton) {
-          (addPassengerButton as HTMLElement).click();
-        } else {
-          console.log("Add Passenger button not found");
-        }
-
-        // Find input fields and set values
-        const inputFields = document.querySelectorAll(
-          "input.ui-autocomplete-input"
-        );
-
-        if (inputFields.length > 0) {
-          (inputFields[0] as HTMLInputElement).value = "Ashraf Khan";
-          inputFields[0].dispatchEvent(new Event("input", { bubbles: true }));
-
-          if (inputFields.length > 1) {
-            (inputFields[1] as HTMLInputElement).value = "Shahid Shah";
-            inputFields[1].dispatchEvent(new Event("input", { bubbles: true }));
-          }
-        } else {
-          console.log("No input fields found");
-        }
-
-        // set age
-        const ageInputs = document.querySelectorAll(
-          "input[formcontrolname='passengerAge']"
-        );
-
-        if (ageInputs.length > 0) {
-          (ageInputs[0] as HTMLInputElement).value = "27";
-          ageInputs[0].dispatchEvent(new Event("input", { bubbles: true }));
-
-          if (ageInputs.length > 1) {
-            (ageInputs[1] as HTMLInputElement).value = "26";
-            ageInputs[1].dispatchEvent(new Event("input", { bubbles: true }));
-          }
-        }
-
-        // set gender
-        // Select "Male" in both gender dropdowns
-        const genderSelects = document.querySelectorAll(
-          "select[formcontrolname='passengerGender']"
-        ) as NodeListOf<HTMLSelectElement>;
-
-        if (genderSelects.length >= 2) {
-          genderSelects[0].value = "M"; // Set first select to Male
-          genderSelects[0].dispatchEvent(
-            new Event("change", { bubbles: true })
-          );
-
-          genderSelects[1].value = "M"; // Set second select to Male
-          genderSelects[1].dispatchEvent(
-            new Event("change", { bubbles: true })
-          );
-
-          console.log("Selected 'Male' in both gender dropdowns");
-        }
-
-        // Select all "passengerFoodChoice" dropdowns
-        const foodChoiceSelects = document.querySelectorAll(
-          "select[formcontrolname='passengerFoodChoice']"
-        ) as NodeListOf<HTMLSelectElement>;
-
-        foodChoiceSelects.forEach((select) => {
-          // Set the value of each dropdown to "No Food" (value="D")
-          select.value = "D";
-          select.dispatchEvent(new Event("change", { bubbles: true }));
-          console.log("Selected 'No Food' in the dropdown");
-        });
-
-        // Check the "Book Only If Confirmed" checkbox
-        const confirmCheckbox = document.querySelector(
-          "input[formcontrolname='bookOnlyIfCnf']"
-        ) as HTMLInputElement;
-
-        if (confirmCheckbox) {
-          confirmCheckbox.checked = true;
-          confirmCheckbox.dispatchEvent(new Event("change", { bubbles: true }));
-          console.log("Checked 'Book Only If Confirmed' checkbox");
-        }
-
-        // Select the radio button input (using value or name attribute)
-        const radioButton = document.querySelector(
-          "input[name='paymentType'][value='2']"
-        ) as HTMLInputElement;
-
-        if (radioButton) {
-          // Simulate a click on the radio button
-          radioButton.click();
-          console.log("Clicked the radio button with value '2'");
-        }
-      },
+  // Load stored data on component mount
+  useEffect(() => {
+    chrome.storage.local.get("passengerDetails", (result) => {
+      if (result.passengerDetails) {
+        setPassengers(result.passengerDetails);
+        setSubmittedPassengers(result.passengerDetails);
+      }
     });
+  }, []);
+
+  const handleInputChange = (
+    index: number,
+    field: keyof Passenger,
+    value: string
+  ) => {
+    const updatedPassengers = [...passengers];
+    updatedPassengers[index][field] = value;
+    setPassengers(updatedPassengers);
+  };
+
+  const addPassenger = () => {
+    if (passengers.length < 6) {
+      setPassengers([
+        ...passengers,
+        { name: "", age: "", gender: "M", food: "D" }, // Default food set to "D"
+      ]);
+    } else {
+      alert("Maximum of 6 passengers allowed.");
+    }
+  };
+
+  const removePassenger = (index: number) => {
+    const updatedPassengers = passengers.filter((_, i) => i !== index);
+    setPassengers(updatedPassengers);
+  };
+
+  const clearAll = () => {
+    setPassengers([{ name: "", age: "", gender: "M", food: "D" }]); // Reset with default food
+    setSubmittedPassengers([]);
+    chrome.storage.local.remove("passengerDetails");
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmittedPassengers(passengers);
+    chrome.storage.local.set({ passengerDetails: passengers });
+    alert("Passenger details saved!");
   };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={onclick}>click me</button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="App">
+      <h2>Passenger Details Form</h2>
+      <form onSubmit={handleSubmit}>
+        {passengers.map((passenger, index) => (
+          <div key={index} className="passenger-form">
+            <input
+              type="text"
+              placeholder="Name"
+              value={passenger.name}
+              onChange={(e) => handleInputChange(index, "name", e.target.value)}
+              required
+            />
+            <input
+              type="number"
+              placeholder="Age"
+              value={passenger.age}
+              onChange={(e) => handleInputChange(index, "age", e.target.value)}
+              required
+            />
+            <select
+              value={passenger.gender}
+              onChange={(e) =>
+                handleInputChange(index, "gender", e.target.value)
+              }
+            >
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+            </select>
+            {index > 0 && (
+              <button
+                type="button"
+                className="remove-btn"
+                onClick={() => removePassenger(index)}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          type="button"
+          className="add-btn"
+          onClick={addPassenger}
+          disabled={passengers.length >= 6}
+        >
+          Add Passenger
+        </button>
+        <button type="submit" className="save-btn">
+          Submit Details
+        </button>
+        <button type="button" className="clear-btn" onClick={clearAll}>
+          Clear All
+        </button>
+      </form>
+
+      <h3>Submitted Passenger Details</h3>
+      <ul>
+        {submittedPassengers
+          .slice(0, showAll ? submittedPassengers.length : 2)
+          .map((p, index) => (
+            <li key={index}>
+              {p.name} - {p.age} - {p.gender} -{" "}
+              {p.food === "D" ? "No Food" : p.food}
+            </li>
+          ))}
+      </ul>
+      {submittedPassengers.length > 2 && (
+        <button onClick={() => setShowAll(!showAll)} className="toggle-btn">
+          {showAll ? "Show Less" : "Show More"}
+        </button>
+      )}
+    </div>
   );
 }
 

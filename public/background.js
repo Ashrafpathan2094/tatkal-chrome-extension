@@ -1,105 +1,125 @@
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (
-    changeInfo.status === 'complete' &&
+    changeInfo.status === "complete" &&
     tab.url &&
     tab.url.includes("https://www.irctc.co.in/nget/booking/psgninput")
   ) {
     chrome.scripting.executeScript({
       target: { tabId: tabId },
       func: () => {
-        // Click the anchor tag
-        const addPassengerButton = document.querySelector("a .prenext");
-        if (addPassengerButton) {
-          addPassengerButton.click();
-        } else {
-          console.log("Add Passenger button not found");
-        }
+        chrome.storage.local.get("passengerDetails", (result) => {
+          const passengerDetails = result.passengerDetails;
+          console.log("Passenger Details from Storage:", passengerDetails);
 
-        // Find input fields and set values
-        const inputFields = document.querySelectorAll(
-          "input.ui-autocomplete-input"
-        );
-
-        if (inputFields.length > 0) {
-          inputFields[0].value = "Ashraf Khan";
-          inputFields[0].dispatchEvent(new Event("input", { bubbles: true }));
-
-          if (inputFields.length > 1) {
-            inputFields[1].value = "Shahid Shah";
-            inputFields[1].dispatchEvent(new Event("input", { bubbles: true }));
+          if (!passengerDetails || passengerDetails.length === 0) {
+            console.log("No passenger details found in storage");
+            return;
           }
-        } else {
-          console.log("No input fields found");
-        }
 
-        // set age
-        const ageInputs = document.querySelectorAll(
-          "input[formcontrolname='passengerAge']"
-        );
-
-        if (ageInputs.length > 0) {
-          ageInputs[0].value = "27";
-          ageInputs[0].dispatchEvent(new Event("input", { bubbles: true }));
-
-          if (ageInputs.length > 1) {
-            ageInputs[1].value = "27";
-            ageInputs[1].dispatchEvent(new Event("input", { bubbles: true }));
+          // Click the "Add Passenger" button based on the number of passengers
+          for (let i = 1; i < passengerDetails.length; i++) {
+            const addPassengerButton = document.querySelector("a .prenext");
+            if (addPassengerButton) {
+              addPassengerButton.click();
+              console.log(
+                `Clicked 'Add Passenger' button for passenger ${i + 1}`
+              );
+            } else {
+              console.log("Add Passenger button not found");
+            }
           }
-        }
 
-        // set gender
-        // Select "Male" in both gender dropdowns
-        const genderSelects = document.querySelectorAll(
-          "select[formcontrolname='passengerGender']"
-        );
+          // Delay to ensure all fields are visible
+          setTimeout(() => {
+            passengerDetails.forEach((passenger, index) => {
+              console.log(
+                `Filling details for passenger ${index + 1}:`,
+                passenger
+              );
 
-        if (genderSelects.length >= 2) {
-          genderSelects[0].value = "M"; // Set first select to Male
-          genderSelects[0].dispatchEvent(
-            new Event("change", { bubbles: true })
-          );
+              // Find name fields and set values
+              const nameFields = document.querySelectorAll(
+                "input.ui-autocomplete-input"
+              );
+              if (nameFields[index]) {
+                nameFields[index].value = passenger.name;
+                nameFields[index].dispatchEvent(
+                  new Event("input", { bubbles: true })
+                );
+              } else {
+                console.log(
+                  `Name input field not found for passenger ${index + 1}`
+                );
+              }
 
-          genderSelects[1].value = "M"; // Set second select to Male
-          genderSelects[1].dispatchEvent(
-            new Event("change", { bubbles: true })
-          );
+              // Set age
+              const ageInputs = document.querySelectorAll(
+                "input[formcontrolname='passengerAge']"
+              );
+              if (ageInputs[index]) {
+                ageInputs[index].value = passenger.age;
+                ageInputs[index].dispatchEvent(
+                  new Event("input", { bubbles: true })
+                );
+              } else {
+                console.log(
+                  `Age input field not found for passenger ${index + 1}`
+                );
+              }
 
-          console.log("Selected 'Male' in both gender dropdowns");
-        }
+              // Set gender
+              const genderSelects = document.querySelectorAll(
+                "select[formcontrolname='passengerGender']"
+              );
+              if (genderSelects[index]) {
+                genderSelects[index].value = passenger.gender; // e.g., "M" or "F"
+                genderSelects[index].dispatchEvent(
+                  new Event("change", { bubbles: true })
+                );
+              } else {
+                console.log(
+                  `Gender select not found for passenger ${index + 1}`
+                );
+              }
 
-        // Select all "passengerFoodChoice" dropdowns
-        const foodChoiceSelects = document.querySelectorAll(
-          "select[formcontrolname='passengerFoodChoice']"
-        );
+              // Set food choice
+              // Select all "passengerFoodChoice" dropdowns
+              const foodChoiceSelects = document.querySelectorAll(
+                "select[formcontrolname='passengerFoodChoice']"
+              );
 
-        foodChoiceSelects.forEach((select) => {
-          // Set the value of each dropdown to "No Food" (value="D")
-          select.value = "D";
-          select.dispatchEvent(new Event("change", { bubbles: true }));
-          console.log("Selected 'No Food' in the dropdown");
+              foodChoiceSelects.forEach((select) => {
+                // Set the value of each dropdown to "No Food" (value="D")
+                select.value = "D";
+                select.dispatchEvent(new Event("change", { bubbles: true }));
+                console.log("Selected 'No Food' in the dropdown");
+              });
+            });
+            // Check the "Book Only If Confirmed" checkbox
+            const confirmCheckbox = document.querySelector(
+              "input[formcontrolname='bookOnlyIfCnf']"
+            );
+
+            if (confirmCheckbox) {
+              confirmCheckbox.checked = true;
+              confirmCheckbox.dispatchEvent(
+                new Event("change", { bubbles: true })
+              );
+              console.log("Checked 'Book Only If Confirmed' checkbox");
+            }
+
+            // Select the radio button input (using value or name attribute)
+            const radioButton = document.querySelector(
+              "input[name='paymentType'][value='2']"
+            );
+
+            if (radioButton) {
+              // Simulate a click on the radio button
+              radioButton.click();
+              console.log("Clicked the radio button with value '2'");
+            }
+          }, 1000); // Adjust the delay as needed
         });
-
-        // Check the "Book Only If Confirmed" checkbox
-        const confirmCheckbox = document.querySelector(
-          "input[formcontrolname='bookOnlyIfCnf']"
-        );
-
-        if (confirmCheckbox) {
-          confirmCheckbox.checked = true;
-          confirmCheckbox.dispatchEvent(new Event("change", { bubbles: true }));
-          console.log("Checked 'Book Only If Confirmed' checkbox");
-        }
-
-        // Select the radio button input (using value or name attribute)
-        const radioButton = document.querySelector(
-          "input[name='paymentType'][value='2']"
-        );
-
-        if (radioButton) {
-          // Simulate a click on the radio button
-          radioButton.click();
-          console.log("Clicked the radio button with value '2'");
-        }
       },
     });
   }

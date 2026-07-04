@@ -13,7 +13,7 @@ function App() {
     { name: "", age: "", gender: "M", food: "D" }, // Default food set to "D"
   ]);
   const [submittedPassengers, setSubmittedPassengers] = useState<Passenger[]>(
-    []
+    [],
   );
   const [showAll, setShowAll] = useState(false);
 
@@ -30,7 +30,7 @@ function App() {
   const handleInputChange = (
     index: number,
     field: keyof Passenger,
-    value: string
+    value: string,
   ) => {
     const updatedPassengers = [...passengers];
     updatedPassengers[index][field] = value;
@@ -68,75 +68,128 @@ function App() {
 
   return (
     <div className="App">
-      <h2>Passenger Details Form</h2>
+      <header className="ticket-header">
+        <span className="ticket-header__eyebrow">IRCTC Auto Fill</span>
+        <h2 className="ticket-header__title">Passenger Manifest</h2>
+        <span className="ticket-header__count">{passengers.length}/6</span>
+      </header>
+
+      <div className="perforation" aria-hidden="true" />
+
       <form onSubmit={handleSubmit}>
-        {passengers.map((passenger, index) => (
-          <div key={index} className="passenger-form">
-            <input
-              type="text"
-              placeholder="Name"
-              value={passenger.name}
-              onChange={(e) => handleInputChange(index, "name", e.target.value)}
-              required
-            />
-            <input
-              type="number"
-              placeholder="Age"
-              value={passenger.age}
-              onChange={(e) => handleInputChange(index, "age", e.target.value)}
-              required
-            />
-            <select
-              value={passenger.gender}
-              onChange={(e) =>
-                handleInputChange(index, "gender", e.target.value)
-              }
-            >
-              <option value="M">Male</option>
-              <option value="F">Female</option>
-            </select>
-            {index > 0 && (
-              <button
-                type="button"
-                className="remove-btn"
-                onClick={() => removePassenger(index)}
-              >
-                Remove
-              </button>
-            )}
-          </div>
-        ))}
+        <div className="stub-list">
+          {passengers.map((passenger, index) => (
+            <div key={index} className="stub">
+              <div
+                className="stub__notch stub__notch--left"
+                aria-hidden="true"
+              />
+              <div
+                className="stub__notch stub__notch--right"
+                aria-hidden="true"
+              />
+
+              <div className="stub__row stub__row--head">
+                <span className="stub__code">
+                  PSGR&middot;{String(index + 1).padStart(2, "0")}
+                </span>
+                {index > 0 && (
+                  <button
+                    type="button"
+                    className="stub__remove"
+                    onClick={() => removePassenger(index)}
+                    aria-label={`Remove passenger ${index + 1}`}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              <div className="stub__row">
+                <input
+                  type="text"
+                  placeholder="Full name"
+                  value={passenger.name}
+                  onChange={(e) =>
+                    handleInputChange(index, "name", e.target.value)
+                  }
+                  required
+                />
+              </div>
+
+              <div className="stub__row stub__row--split">
+                <input
+                  type="number"
+                  placeholder="Age"
+                  value={passenger.age}
+                  onChange={(e) =>
+                    handleInputChange(index, "age", e.target.value)
+                  }
+                  required
+                />
+                <select
+                  value={passenger.gender}
+                  onChange={(e) =>
+                    handleInputChange(index, "gender", e.target.value)
+                  }
+                >
+                  <option value="M">Male</option>
+                  <option value="F">Female</option>
+                </select>
+              </div>
+            </div>
+          ))}
+        </div>
+
         <button
           type="button"
           className="add-btn"
           onClick={addPassenger}
           disabled={passengers.length >= 6}
         >
-          Add Passenger
+          + Add passenger
         </button>
-        <button type="submit" className="save-btn">
-          Submit Details
-        </button>
-        <button type="button" className="clear-btn" onClick={clearAll}>
-          Clear All
-        </button>
+
+        <div className="perforation" aria-hidden="true" />
+
+        <div className="action-row">
+          <button type="submit" className="save-btn">
+            Save details
+          </button>
+          <button type="button" className="clear-btn" onClick={clearAll}>
+            Clear all
+          </button>
+        </div>
       </form>
 
-      <h3>Submitted Passenger Details</h3>
-      <ul>
-        {submittedPassengers
-          .slice(0, showAll ? submittedPassengers.length : 2)
-          .map((p, index) => (
-            <li key={index}>
-              {p.name} - {p.age} - {p.gender} -{" "}
-              {p.food === "D" ? "No Food" : p.food}
-            </li>
-          ))}
-      </ul>
-      {submittedPassengers.length > 2 && (
-        <button onClick={() => setShowAll(!showAll)} className="toggle-btn">
-          {showAll ? "Show Less" : "Show More"}
-        </button>
+      {submittedPassengers.length > 0 && (
+        <section className="manifest">
+          <h3 className="manifest__title">
+            Saved manifest <span>({submittedPassengers.length})</span>
+          </h3>
+          <ul>
+            {submittedPassengers
+              .slice(0, showAll ? submittedPassengers.length : 2)
+              .map((p, index) => (
+                <li key={index}>
+                  <span className="manifest__num">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="manifest__name">{p.name}</span>
+                  <span className="manifest__age">{p.age}</span>
+                  <span className="manifest__gender">{p.gender}</span>
+                  <span className="manifest__food">
+                    {p.food === "D" ? "No food" : p.food}
+                  </span>
+                </li>
+              ))}
+          </ul>
+          {submittedPassengers.length > 2 && (
+            <button onClick={() => setShowAll(!showAll)} className="toggle-btn">
+              {showAll ? "Show less \u25B4" : "Show all \u25BE"}
+            </button>
+          )}
+        </section>
       )}
     </div>
   );

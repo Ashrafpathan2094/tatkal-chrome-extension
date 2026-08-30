@@ -8,6 +8,14 @@ type Passenger = {
   food: string;
 };
 
+// IRCTC passenger form constraints. Kept as named constants so they can be
+// retuned in one place if IRCTC changes the form.
+const MAX_NAME_LENGTH = 16;
+// IRCTC accepts alphabets and spaces only in passenger names.
+const NAME_PATTERN = "[A-Za-z ]+";
+const MIN_AGE = 1;
+const MAX_AGE = 125;
+
 function App() {
   const [passengers, setPassengers] = useState<Passenger[]>([
     { name: "", age: "", gender: "M", food: "D" }, // Default food set to "D"
@@ -61,8 +69,14 @@ function App() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmittedPassengers(passengers);
-    chrome.storage.local.set({ passengerDetails: passengers });
+    // Collapse stray whitespace - it counts against IRCTC's 16-char budget.
+    const normalized = passengers.map((p) => ({
+      ...p,
+      name: p.name.trim().replace(/\s+/g, " "),
+    }));
+    setPassengers(normalized);
+    setSubmittedPassengers(normalized);
+    chrome.storage.local.set({ passengerDetails: normalized });
     alert("Passenger details saved!");
   };
 
@@ -109,6 +123,9 @@ function App() {
                 <input
                   type="text"
                   placeholder="Full name"
+                  maxLength={MAX_NAME_LENGTH}
+                  pattern={NAME_PATTERN}
+                  title={`Letters and spaces only, up to ${MAX_NAME_LENGTH} characters`}
                   value={passenger.name}
                   onChange={(e) =>
                     handleInputChange(index, "name", e.target.value)
@@ -121,6 +138,10 @@ function App() {
                 <input
                   type="number"
                   placeholder="Age"
+                  min={MIN_AGE}
+                  max={MAX_AGE}
+                  step={1}
+                  title={`Age between ${MIN_AGE} and ${MAX_AGE}`}
                   value={passenger.age}
                   onChange={(e) =>
                     handleInputChange(index, "age", e.target.value)
@@ -135,6 +156,7 @@ function App() {
                 >
                   <option value="M">Male</option>
                   <option value="F">Female</option>
+                  <option value="T">Transgender</option>
                 </select>
               </div>
             </div>
